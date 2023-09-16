@@ -1,11 +1,11 @@
 {
   "name": "decoxml",
   "version": "1.0.0",
-  "description": "123",
+  "description": "A lightweight, decorator-based XML to object mapper library.",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
   "module": "build/module/index.js",
-  "repository": "https://github.com/YOUR_GITHUB_USER_NAME/decoxml",
+  "repository": "https://github.com/limejuiceOwO/decoxml",
   "license": "MIT",
   "keywords": [],
   "scripts": {
@@ -40,7 +40,10 @@
   "engines": {
     "node": ">=10"
   },
-  "dependencies": {},
+  "dependencies": {
+    "@xmldom/xmldom": "^0.8.10",
+    "reflect-metadata": "^0.1.13"
+  },
   "devDependencies": {
     "@ava/typescript": "^1.1.1",
     "@istanbuljs/nyc-config-typescript": "^1.0.1",
