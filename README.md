@@ -25,6 +25,7 @@ enum MyEnum {
 class BarClass extends XMLElement {
   @Attr()
   barProp: string;
+
   @Text()
   barText: string;
 }
@@ -93,7 +94,7 @@ class Foo extends XMLElement {
   attr1: number;
 
   @Attr({ typ: 'number', required: true })
-  @Validator(NotTooBig)
+  @Validators([NotTooBig, NotTooSmall])
   attr2: number;
 
   @Ready()

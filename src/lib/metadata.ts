@@ -18,7 +18,7 @@ export interface AttrDef {
   typ?: PrimitiveType | Record<string, number | string>;
   required?: boolean;
   converter?: ValueConverterDef;
-  validator?: ValidatorDef;
+  validator?: ValidatorDef[];
   ns?: string;
   nsURI?: string;
 }

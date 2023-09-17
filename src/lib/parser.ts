@@ -82,10 +82,12 @@ function parseXMLElement(
     }
 
     if (entry.validator) {
-      try {
-        entry.validator(anyInstance[entry.prop]);
-      } catch (e) {
-        throw new CustomValidationError(e);
+      for (const validator of entry.validator) {
+        try {
+          validator(anyInstance[entry.prop]);
+        } catch (e) {
+          throw new CustomValidationError(e);
+        }
       }
     }
   }

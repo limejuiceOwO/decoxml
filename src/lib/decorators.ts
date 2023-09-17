@@ -83,7 +83,7 @@ export function AttrNameGenerator(generator: AttrNameGeneratorDef) {
 
 /**
  * Specifies a converter function on an attribute, which converts between string XML attribute value and user-defined property type.
- * @param function the converter function
+ * @param converter the converter function
  */
 export function ValueConverter(converter: ValueConverterDef) {
   return (target: unknown, propertyKey: string) => {
@@ -98,14 +98,32 @@ export function ValueConverter(converter: ValueConverterDef) {
 }
 
 /**
- * Specifies a validator function on an attribute, which validates the attribute value after it's converted.
- * @param function the validator function, throws an exception in case of validation error
+ * Add a validator function on an attribute, which validates the attribute value after it's converted.
+ * @param validator the validator function, throws an exception in case of validation error
  */
 export function Validator(validator: ValidatorDef) {
   return (target: unknown, propertyKey: string) => {
     const md = getOrCreateMetadata(target);
     const def = getAttrDef(md, propertyKey);
-    def.validator = validator;
+    if (!def.validator) {
+      def.validator = [];
+    }
+    def.validator.push(validator);
+  };
+}
+
+/**
+ * Add validator functions on an attribute, which validate the attribute value after it's converted.
+ * @param validators the validator functions, throw an exception in case of validation error
+ */
+export function Validators(validators: ValidatorDef[]) {
+  return (target: unknown, propertyKey: string) => {
+    const md = getOrCreateMetadata(target);
+    const def = getAttrDef(md, propertyKey);
+    if (!def.validator) {
+      def.validator = [];
+    }
+    def.validator = def.validator.concat(validators);
   };
 }
 
