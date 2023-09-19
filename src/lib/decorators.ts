@@ -31,7 +31,7 @@ export function NamedTag(
   const { rawOutput = false } = option || {};
   return (target: Ctor) => {
     const md = getOrCreateMetadata(target.prototype);
-    md.name = target.name;
+    md.defined = true;
     md.tag = name || target.name;
     md.rawOutput = rawOutput;
   };
@@ -151,13 +151,11 @@ export function NamedAttr(
       `${target.constructor.name}.${propertyKey} : Cannot define type and converter at the same time`
     );
 
-    Object.assign(def, {
-      defined: true,
-      prop: propertyKey,
-      name,
-      typ,
-      required,
-    });
+    def.defined = true;
+    def.prop = propertyKey;
+    def.name = name;
+    def.typ = typ;
+    def.required = required;
   };
 }
 
@@ -178,12 +176,12 @@ export function Attr(option?: {
 /**
  * Links a XML child element with a class property.
  * The link can be inherited, need not to be defined under leaf subclasses.
- * @param clazz class of the child element
+ * @param classRef a function that returns the class of the child element
  * @param option.minOccur minimum times of occurrence of the child element, defaults to 1. if this value is greater than 1, all children elements will be saved into an array.
  * @param option.maxOccur maximum times of occurrence of the child element, defaults to 1
  */
 export function Child(
-  clazz: typeof XMLElement,
+  classRef: () => typeof XMLElement,
   option?: {
     minOccur?: number;
     maxOccur?: number | 'unlimited';
@@ -200,12 +198,11 @@ export function Child(
   return (target: unknown, propertyKey: string) => {
     const md = getOrCreateMetadata(target);
     const def = getChildDef(md, propertyKey);
-    Object.assign(def, {
-      prop: propertyKey,
-      clazz,
-      minOccur,
-      maxOccur,
-    });
+
+    def.prop = propertyKey;
+    def.classRef = classRef; // using a reference func here to avoid undefined types under circular reference circumstance
+    def.minOccur = minOccur;
+    def.maxOccur = maxOccur;
   };
 }
 

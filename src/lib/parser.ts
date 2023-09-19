@@ -3,8 +3,13 @@ import { DOMParser } from '@xmldom/xmldom';
 
 import { XMLElement } from './base';
 import { CustomParseError, CustomValidationError } from './errors';
-import { AttrDef, ChildDef, getMetadata } from './metadata';
-import { isInvalidStr, mustBeTrue, notNil } from './utils';
+import {
+  AttrDef,
+  ChildDef,
+  getMetadata,
+  requireMetadataAndClsName,
+} from './metadata';
+import { isInvalidStr, mustBeTrue } from './utils';
 
 interface ChildMapEntry extends ChildDef {
   result: XMLElement[];
@@ -24,8 +29,8 @@ function parseXMLElement(
   curType: typeof XMLElement,
   node: Element
 ): XMLElement {
-  const md = getMetadata(curType.prototype); // TODO: add support of reading metadata on super classes
-  notNil(md.tag, 'Tag must be defined on every node');
+  // TODO: add support of reading metadata on super classes
+  const { md, clsName } = requireMetadataAndClsName(curType.prototype);
 
   const anyInstance = Object.create(curType.prototype);
   const instance = anyInstance as XMLElement;
@@ -42,16 +47,16 @@ function parseXMLElement(
     const fieldName = attrNode.nodeName.replace(`${attrNode.prefix}:`, ''); // TODO: add support of handling the same attribute under different namespace
     const entry = attrMap[fieldName];
     if (!entry) {
-      // console.log(`${md.name}: Unknown attribute "${fieldName}"`);
+      // console.log(`${clsName}: Unknown attribute "${fieldName}"`);
       continue;
     }
 
-    mustBeTrue(!entry.exist, `${md.name}: Multiple attribute "${fieldName}"`);
+    mustBeTrue(!entry.exist, `${clsName}: Multiple attribute "${fieldName}"`);
     entry.exist = true;
 
     mustBeTrue(
       entry.defined,
-      `${md.name}.${entry.prop}: @Attr must be defined`
+      `${clsName}.${entry.prop}: @Attr must be defined`
     );
 
     if (entry.converter) {
@@ -75,7 +80,7 @@ function parseXMLElement(
           // enum
           mustBeTrue(
             Object.values(entry.typ).some((x) => x === attrNode.value),
-            `${md.name}.${entry.prop}: Unknown enum value ${attrNode.value}`
+            `${clsName}.${entry.prop}: Unknown enum value ${attrNode.value}`
           );
           anyInstance[entry.prop] = attrNode.value;
       }
@@ -110,10 +115,10 @@ function parseXMLElement(
     }
     const entry = childMap[name];
     if (!entry) {
-      // console.log(`${md.name}: Unknown node tag "${name}"`);
+      // console.log(`${clsName}: Unknown node tag "${name}"`);
       continue;
     }
-    const chInstance = parseXMLElement(entry.clazz, chNode as Element);
+    const chInstance = parseXMLElement(entry.classRef(), chNode as Element);
     entry.result.push(chInstance);
   }
 
@@ -125,7 +130,7 @@ function parseXMLElement(
   } else {
     mustBeTrue(
       !textDef?.required,
-      `${md.name}: Required text content not exists`
+      `${clsName}: Required text content not exists`
     );
   }
 
@@ -133,12 +138,12 @@ function parseXMLElement(
     const { result, minOccur, maxOccur, prop } = entry;
     mustBeTrue(
       result.length >= minOccur,
-      `${md.name}: Too few child node "${tag}": ${result.length} out of ${minOccur}`
+      `${clsName}: Too few child node "${tag}": ${result.length} out of ${minOccur}`
     );
     if (maxOccur !== 'unlimited') {
       mustBeTrue(
         result.length <= maxOccur,
-        `${md.name}: Too many child node "${tag}": ${result.length} out of ${maxOccur}`
+        `${clsName}: Too many child node "${tag}": ${result.length} out of ${maxOccur}`
       );
     }
     if (result.length === 1 && maxOccur === 1) {
@@ -151,7 +156,7 @@ function parseXMLElement(
   Object.values(attrMap).forEach((entry) =>
     mustBeTrue(
       entry.exist || !entry.required,
-      `${md.name}: Required attribute "${entry.name}" not exists`
+      `${clsName}: Required attribute "${entry.name}" not exists`
     )
   );
 
@@ -179,8 +184,9 @@ function getChildMap(target: typeof XMLElement) {
     const md = getMetadata(obj);
 
     for (const childDef of Object.values(md.children)) {
-      const childMd = getMetadata(childDef.clazz.prototype);
-      notNil(childMd.tag, 'Tag must be defined on every node');
+      const { md: childMd } = requireMetadataAndClsName(
+        childDef.classRef().prototype
+      );
 
       if (map[childMd.tag]) {
         // child element already defined on subclasses, super class definition is overrided

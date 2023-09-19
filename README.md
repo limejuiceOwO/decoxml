@@ -45,10 +45,10 @@ class Foo extends XMLElement {
   @NamedAttr('attr3', { typ: MyEnum, required: true })
   enumProp: MyEnum;
 
-  @Child(BarClass)
+  @Child(() => BarClass)
   bar: BarClass;
 
-  @Child(Baz, { maxOccur: 'unlimited' })
+  @Child(() => Baz, { maxOccur: 'unlimited' })
   baz: Baz[];
 }
 
@@ -165,7 +165,7 @@ class Father extends XMLElement {
   @Attr()
   attr2: string;
 
-  @Child(Foo)
+  @Child(() => Foo)
   child: Foo;
 }
 

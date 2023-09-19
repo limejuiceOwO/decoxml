@@ -1,4 +1,5 @@
 import { XMLElement } from './base';
+import { mustBeTrue, notNil } from './utils';
 
 const XML_MD_KEY = 'decoxml-metadata';
 
@@ -25,7 +26,7 @@ export interface AttrDef {
 
 export interface ChildDef {
   prop: string;
-  clazz?: typeof XMLElement;
+  classRef?: () => typeof XMLElement;
   minOccur?: number;
   maxOccur?: number | 'unlimited';
 }
@@ -36,7 +37,7 @@ export interface TextValueDef {
 }
 
 export interface XMLMetadata {
-  name?: string;
+  defined: boolean;
   tag?: string;
   ns?: string;
   attrs: Record<string, AttrDef>;
@@ -58,10 +59,20 @@ export function getOrCreateMetadata(target: unknown): XMLMetadata {
   let md: XMLMetadata = Reflect.getOwnMetadata(XML_MD_KEY, target);
   if (!md) {
     md = {
+      defined: false,
       attrs: {},
       children: {},
     };
     Reflect.defineMetadata(XML_MD_KEY, md, target);
   }
   return md;
+}
+
+export function requireMetadataAndClsName(prototype: unknown) {
+  notNil(prototype, 'can not handle objects with null prototype');
+
+  const clsName = prototype.constructor.name;
+  const md = getMetadata(prototype);
+  mustBeTrue(md.defined, `${clsName}: missing Tag decorator`);
+  return { clsName, md };
 }
